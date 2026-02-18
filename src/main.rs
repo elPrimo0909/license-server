@@ -1,14 +1,13 @@
 use axum::{routing::get, Router};
 use std::net::SocketAddr;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    // Rutas mínimas
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/salt", get(|| async { "salt-endpoint-ok" }));
 
-    // Render define el puerto en la variable PORT
     let port: u16 = std::env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
         .parse()
@@ -18,8 +17,7 @@ async fn main() {
 
     println!("License server listening on {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind(addr).await.unwrap();
+
+    axum::serve(listener, app).await.unwrap();
 }
